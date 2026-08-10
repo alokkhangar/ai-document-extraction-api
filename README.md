@@ -1,107 +1,80 @@
-# ai-document-extraction-api
+# AI Document Extraction API
 
-## Project Purpose
+AI-powered document extraction and invoice validation API built with Java 17, Spring Boot, and Apache PDFBox.
 
-`ai-document-extraction-api` is the foundational service for an AI-powered document
-extraction platform. This initial version establishes a clean, production-ready
-Spring Boot skeleton: it accepts PDF uploads, validates them, and persists upload
-metadata. **Actual AI-based text/data extraction from PDFs is intentionally not
-implemented yet** — this project only lays the groundwork (API contracts, validation,
-persistence, error handling) that extraction logic will be built on top of in a
-future iteration.
+## Overview
+
+This project demonstrates a backend service for processing invoice documents and converting unstructured PDF content into structured, validated business data.
+
+The application is being developed incrementally toward an AI-powered document intelligence platform.
+
+### Current Processing Flow
+
+```text
+PDF Document
+     |
+     v
+Spring Boot REST API
+     |
+     v
+Apache PDFBox
+     |
+     v
+Text Extraction
+     |
+     v
+Invoice Domain Model
+     |
+     v
+Java Validation
+     |
+     v
+Validation Result
+```
+
+## Current Features
+
+- PDF document upload
+- PDF text extraction using Apache PDFBox
+- Invoice domain model
+- Vendor modeling
+- Invoice item modeling
+- Line-item amount validation
+- Subtotal validation
+- Tax validation
+- Grand-total validation
+- Invoice validation result
+- REST APIs
+- Global error handling
+- Unit tests
+- Java 17
+- Spring Boot
+- Maven
+- Git/GitHub
 
 ## Technology Stack
 
-| Component        | Technology                          |
-|-------------------|--------------------------------------|
-| Language          | Java 17                              |
-| Framework         | Spring Boot 3.3.5                    |
-| Build tool        | Maven                                |
-| Web layer         | Spring Web (REST)                    |
-| Validation        | Spring Validation                    |
-| Persistence       | Spring Data JPA                      |
-| Database          | PostgreSQL                           |
-| Boilerplate       | Lombok                               |
-| Observability     | Spring Boot Actuator                 |
-| Testing           | JUnit 5, Mockito, Spring MockMvc     |
+| Technology | Purpose |
+|---|---|
+| Java 17 | Backend development |
+| Spring Boot | REST API and application framework |
+| Apache PDFBox | PDF text extraction |
+| Maven | Build and dependency management |
+| JUnit 5 | Unit testing |
+| Git | Version control |
+| GitHub | Source code repository |
 
-## Project Structure
-
-```
-com.example.aidocument
-├── controller   # REST controllers (DocumentController)
-├── service      # Business logic (DocumentService / DocumentServiceImpl)
-├── dto          # Request/response payloads
-├── entity       # JPA entities (Document, DocumentStatus)
-├── repository   # Spring Data JPA repositories
-└── exception    # Custom exceptions + global exception handler
-```
-
-## Prerequisites
-
-* JDK 17+
-* Maven 3.8+
-* A running PostgreSQL instance
-
-## Database Setup
-
-Create a local database (defaults assume this name/user, override via env vars below):
-
-```sql
-CREATE DATABASE ai_document_extraction;
-```
-
-The application uses `spring.jpa.hibernate.ddl-auto=update`, so the `documents`
-table is created automatically on startup — no manual migration is required for
-this initial version.
-
-## Configuration
-
-Connection settings are read from environment variables, with sensible local
-defaults defined in `src/main/resources/application.yml`:
-
-| Variable       | Default      | Description             |
-|----------------|--------------|--------------------------|
-| `DB_USERNAME`  | `postgres`   | PostgreSQL username      |
-| `DB_PASSWORD`  | `postgres`   | PostgreSQL password      |
-
-The datasource URL defaults to `jdbc:postgresql://localhost:5432/ai_document_extraction`.
-
-## How to Run Locally
-
-1. Start PostgreSQL and ensure the database above exists.
-2. From the project root, run:
-
-   ```bash
-   mvn spring-boot:run
-   ```
-
-   Or build a jar and run it directly:
-
-   ```bash
-   mvn clean package
-   java -jar target/ai-document-extraction-api.jar
-   ```
-
-3. The service starts on **http://localhost:8080**.
-
-## Running Tests
-
-```bash
-mvn test
-```
-
-## Available APIs
-
-Base path: `/api/v1/documents`
+## API Documentation
 
 ### 1. Health Check
 
-```
+Checks whether the application is running.
+
+```http
 GET /api/v1/documents/health
 ```
 
-**Response `200 OK`:**
+Example response:
 
 ```json
 {
@@ -110,75 +83,277 @@ GET /api/v1/documents/health
 }
 ```
 
-### 2. Upload Document for Extraction
+### 2. Extract Text from PDF
 
-```
-POST /api/v1/documents/extract
+Extracts text from a PDF document using Apache PDFBox.
+
+```http
+POST /api/v1/documents/extract-text
 Content-Type: multipart/form-data
 ```
 
-**Form parameter:**
+Request parameter:
 
-| Name   | Type | Required | Description                  |
-|--------|------|----------|-------------------------------|
-| `file` | file | yes      | PDF file to upload (max 10MB) |
+```text
+file = invoice.pdf
+```
 
-**Example (curl):**
+Example response:
+
+```json
+{
+  "fileName": "sample_invoice.pdf",
+  "pageCount": 1,
+  "text": "SAMPLE INVOICE..."
+}
+```
+
+## Invoice Validation
+
+The application uses deterministic Java validation after invoice data is extracted.
+
+### Line Item Validation
+
+For each invoice item:
+
+```text
+Quantity × Unit Price = Amount
+```
+
+### Subtotal Validation
+
+The system calculates the subtotal from all invoice line items and compares it with the extracted subtotal.
+
+### Tax Validation
+
+The system validates the extracted tax amount and tax rate.
+
+### Grand Total Validation
+
+The expected grand total is calculated as:
+
+```text
+Subtotal + Tax = Grand Total
+```
+
+Any mismatch is reported as a validation error.
+
+## Architecture
+
+```text
+                    PDF Document
+                         |
+                         v
+              +----------------------+
+              | Spring Boot REST API |
+              +----------------------+
+                         |
+                         v
+              +----------------------+
+              |  Document Controller |
+              +----------------------+
+                         |
+                         v
+              +----------------------+
+              |   Document Service   |
+              +----------------------+
+                         |
+                         v
+              +----------------------+
+              |     Apache PDFBox    |
+              +----------------------+
+                         |
+                         v
+                   Extracted Text
+                         |
+                         v
+              +----------------------+
+              |  Invoice Domain Model|
+              +----------------------+
+                         |
+                         v
+              +----------------------+
+              |  Invoice Validator   |
+              +----------------------+
+                         |
+                  +------+------+
+                  |             |
+                  v             v
+                VALID        INVALID
+                  |             |
+                  v             v
+              Continue      Review Error
+```
+
+## Design Principles
+
+### AI for Unstructured Data Extraction
+
+The future AI layer will interpret unstructured document text and convert it into structured invoice data.
+
+### Java for Deterministic Validation
+
+Financial calculations and business rules are handled by Java.
+
+```text
+AI
+ |
+ +-- Extract information
+ |
+ v
+Structured Invoice
+ |
+ v
+Java
+ |
+ +-- Validate calculations
+ +-- Validate business rules
+ +-- Detect discrepancies
+```
+
+## Error Handling
+
+The application validates:
+
+- Empty PDF files
+- Unsupported file types
+- Invalid invoice values
+- Line-item calculation mismatches
+- Subtotal mismatches
+- Tax validation errors
+- Grand-total mismatches
+
+## Testing
+
+The project includes unit tests for invoice validation.
+
+Current test scenarios include:
+
+- Valid invoice
+- Line-item amount mismatch
+- Subtotal mismatch
+- Grand-total mismatch
+
+Run all tests using:
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/documents/extract \
-  -F "file=@/path/to/document.pdf"
+mvn clean test
 ```
 
-**Response `201 Created`:**
+## Running Locally
 
-```json
-{
-  "documentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-  "filename": "document.pdf",
-  "status": "RECEIVED",
-  "message": "File received successfully. Extraction is not yet implemented."
-}
+### Prerequisites
+
+- Java 17
+- Maven 3.8+
+- Git
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/alokkhangar/ai-document-extraction-api.git
 ```
 
-**Validation rules:**
+### Build
 
-* File must not be empty → `400 Bad Request`
-* File must be a PDF (`.pdf` extension + `application/pdf` content type) → `400 Bad Request`
-* File must not exceed 10MB → `413 Payload Too Large`
-
-> Note: This endpoint currently only validates and records the upload. It does not
-> yet extract text or data from the PDF — that logic will be added in a subsequent
-> version.
-
-### Actuator Endpoints
-
-| Endpoint            | Description         |
-|----------------------|----------------------|
-| `GET /actuator/health` | Application health |
-| `GET /actuator/info`   | Application info   |
-
-## Error Response Format
-
-All errors follow a consistent shape, produced by the global exception handler:
-
-```json
-{
-  "timestamp": "2026-08-10T12:00:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Only PDF files are supported",
-  "path": "/api/v1/documents/extract"
-}
+```bash
+mvn clean install
 ```
 
-## Out of Scope (for this version)
+### Run Tests
 
-The following are explicitly **not** part of this initial foundation:
+```bash
+mvn clean test
+```
 
-* PDF text/data extraction logic
-* AI/LLM integration (OpenAI, Claude, etc.)
-* Authentication / authorization
-* Frontend (React) or workflow tooling (n8n)
-* Docker packaging
-* Microservices decomposition
+### Run the Application
+
+```bash
+mvn spring-boot:run
+```
+
+The application runs by default on:
+
+```text
+http://localhost:8080
+```
+
+## Testing with Postman
+
+### Health API
+
+```http
+GET http://localhost:8080/api/v1/documents/health
+```
+
+### PDF Extraction API
+
+```http
+POST http://localhost:8080/api/v1/documents/extract-text
+```
+
+In Postman:
+
+```text
+Body
+  -> form-data
+      -> Key: file
+      -> Type: File
+      -> Value: invoice.pdf
+```
+
+## Roadmap
+
+### Phase 1 — Core Document Processing
+
+- [x] Spring Boot REST API
+- [x] Health API
+- [x] PDF upload
+- [x] PDF text extraction
+- [x] Invoice domain model
+- [x] Invoice validation
+- [x] Unit tests
+- [x] GitHub repository
+
+### Phase 2 — AI Document Extraction
+
+- [ ] LLM integration
+- [ ] Structured invoice extraction
+- [ ] JSON schema validation
+- [ ] AI extraction error handling
+- [ ] LLM provider abstraction
+- [ ] Prompt management
+
+### Phase 3 — Advanced Document Intelligence
+
+- [ ] OCR for scanned documents
+- [ ] Purchase Order extraction
+- [ ] PO vs Invoice comparison
+- [ ] Price discrepancy detection
+- [ ] Quantity discrepancy detection
+- [ ] Duplicate invoice detection
+- [ ] Vendor-specific document formats
+
+### Phase 4 — Production Readiness
+
+- [ ] PostgreSQL persistence
+- [ ] Database migrations
+- [ ] Authentication and authorization
+- [ ] Docker support
+- [ ] Integration tests
+- [ ] API documentation with OpenAPI
+- [ ] Observability
+- [ ] CI/CD pipeline
+- [ ] Cloud deployment
+
+## Project Status
+
+The project is actively under development.
+
+Current milestone:
+
+**PDF → Text → Structured Domain Model → Java Validation**
+
+Upcoming milestone:
+
+**PDF → Text → LLM → Structured Invoice → Java Validation**
