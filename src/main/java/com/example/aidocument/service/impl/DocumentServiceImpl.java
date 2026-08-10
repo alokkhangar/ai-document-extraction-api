@@ -93,9 +93,17 @@ public class DocumentServiceImpl implements DocumentService {
                 InvoiceValidationResult validation =
                         invoiceValidator.validate(invoice);
 
+                boolean reviewRequired = !validation.valid();
+
+                String status = reviewRequired
+                        ? "REVIEW_REQUIRED"
+                        : "COMPLETED";
+
                 return new InvoiceExtractionResponse(
                         invoice,
-                        validation
+                        validation,
+                        status,
+                        reviewRequired
                 );
             }
 

@@ -5,6 +5,8 @@ import com.example.aidocument.model.InvoiceValidationResult;
 
 public record InvoiceExtractionResponse(
         Invoice invoice,
-        InvoiceValidationResult validation
+        InvoiceValidationResult validation,
+        String status,
+        boolean reviewRequired
 ) {
 }
