@@ -2,6 +2,9 @@ spring:
   application:
     name: ai-document-extraction-api
 
+  profiles:
+    active: mock
+
   #datasource:
   #  url: jdbc:postgresql://localhost:5432/ai_document_extraction
   #  username: ${DB_USERNAME:postgres}

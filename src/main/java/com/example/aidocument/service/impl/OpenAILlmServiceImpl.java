@@ -8,6 +8,7 @@ import com.example.aidocument.service.LlmService;
 import com.openai.client.OpenAIClient;
 import com.openai.models.ChatModel;
 import com.openai.models.chat.completions.ChatCompletionCreateParams;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Service
+@Profile("openai")
 public class OpenAILlmServiceImpl implements LlmService {
 
     private final OpenAIClient openAIClient;
