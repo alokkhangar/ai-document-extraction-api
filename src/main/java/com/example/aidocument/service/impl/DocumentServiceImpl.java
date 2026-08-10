@@ -1,7 +1,12 @@
 package com.example.aidocument.service.impl;
 
+import com.example.aidocument.dto.InvoiceExtractionResponse;
 import com.example.aidocument.dto.PdfExtractionResponse;
+import com.example.aidocument.model.Invoice;
+import com.example.aidocument.model.InvoiceValidationResult;
 import com.example.aidocument.service.DocumentService;
+import com.example.aidocument.service.InvoiceValidator;
+import com.example.aidocument.service.LlmService;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -14,6 +19,16 @@ import java.io.IOException;
 public class DocumentServiceImpl implements DocumentService {
 
     private static final String PDF_CONTENT_TYPE = "application/pdf";
+    private final LlmService llmService;
+    private final InvoiceValidator invoiceValidator;
+
+    public DocumentServiceImpl(
+            LlmService llmService,
+            InvoiceValidator invoiceValidator) {
+
+        this.llmService = llmService;
+        this.invoiceValidator = invoiceValidator;
+    }
 
     @Override
     public PdfExtractionResponse extractText(MultipartFile file) {
@@ -55,6 +70,39 @@ public class DocumentServiceImpl implements DocumentService {
         if (!PDF_CONTENT_TYPE.equalsIgnoreCase(file.getContentType())) {
             throw new IllegalArgumentException(
                     "Only PDF files are supported"
+            );
+        }
+    }
+
+    @Override
+    public InvoiceExtractionResponse extractInvoice(MultipartFile file) {
+
+        validateFile(file);
+
+        try {
+            byte[] pdfBytes = file.getBytes();
+
+            try (PDDocument document = Loader.loadPDF(pdfBytes)) {
+
+                PDFTextStripper textStripper = new PDFTextStripper();
+
+                String text = textStripper.getText(document);
+
+                Invoice invoice = llmService.extractInvoice(text);
+
+                InvoiceValidationResult validation =
+                        invoiceValidator.validate(invoice);
+
+                return new InvoiceExtractionResponse(
+                        invoice,
+                        validation
+                );
+            }
+
+        } catch (IOException e) {
+            throw new IllegalStateException(
+                    "Unable to process PDF",
+                    e
             );
         }
     }

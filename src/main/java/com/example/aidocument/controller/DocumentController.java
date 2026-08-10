@@ -1,6 +1,7 @@
 package com.example.aidocument.controller;
 
 import com.example.aidocument.dto.HealthResponse;
+import com.example.aidocument.dto.InvoiceExtractionResponse;
 import com.example.aidocument.dto.PdfExtractionResponse;
 import com.example.aidocument.service.DocumentService;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,14 @@ public class DocumentController {
     public ResponseEntity<PdfExtractionResponse> extractText(@RequestParam("file") MultipartFile file) {
 
         return ResponseEntity.ok(documentService.extractText(file));
+    }
+
+    @PostMapping(value = "/extract-invoice", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<InvoiceExtractionResponse> extractInvoice(
+            @RequestParam("file") MultipartFile file) {
+
+        return ResponseEntity.ok(
+                documentService.extractInvoice(file)
+        );
     }
 }
