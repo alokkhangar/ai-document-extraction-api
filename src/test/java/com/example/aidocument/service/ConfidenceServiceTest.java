@@ -34,12 +34,14 @@ class ConfidenceServiceTest {
     }
 
     @Test
-    void shouldReduceConfidenceForOneValidationError() {
+    void shouldReduceConfidenceForGrandTotalMismatch() {
 
         InvoiceValidationResult validation =
                 new InvoiceValidationResult(
                         false,
-                        List.of("Grand total mismatch")
+                        List.of(
+                                "Grand total mismatch. Expected: 40887.00, Actual: 45887.00"
+                        )
                 );
 
         double result =
@@ -49,21 +51,38 @@ class ConfidenceServiceTest {
     }
 
     @Test
-    void shouldReduceConfidenceForTwoValidationErrors() {
+    void shouldApplyDifferentPenaltiesForDifferentErrors() {
 
         InvoiceValidationResult validation =
                 new InvoiceValidationResult(
                         false,
                         List.of(
                                 "Grand total mismatch",
-                                "Subtotal mismatch"
+                                "Tax mismatch"
                         )
                 );
 
         double result =
                 confidenceService.calculate(validation);
 
-        assertEquals(0.68, result, 0.0001);
+        assertEquals(0.73, result, 0.0001);
+    }
+
+    @Test
+    void shouldApplyHigherPenaltyForMissingRequiredField() {
+
+        InvoiceValidationResult validation =
+                new InvoiceValidationResult(
+                        false,
+                        List.of(
+                                "Missing required field: invoice number"
+                        )
+                );
+
+        double result =
+                confidenceService.calculate(validation);
+
+        assertEquals(0.73, result, 0.0001);
     }
 
     @Test
@@ -91,3 +110,8 @@ class ConfidenceServiceTest {
         assertEquals(0.30, result, 0.0001);
     }
 }
+
+git status
+git add .
+git commit -m "Improve confidence scoring rules"
+git push
