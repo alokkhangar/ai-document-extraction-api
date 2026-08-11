@@ -3,7 +3,7 @@ spring:
     name: ai-document-extraction-api
 
   profiles:
-    active: mock
+    active: gemini
 
   #datasource:
   #  url: jdbc:postgresql://localhost:5432/ai_document_extraction

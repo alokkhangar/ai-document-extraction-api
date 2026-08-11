@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 public class DocumentServiceImpl implements DocumentService {
@@ -99,19 +100,33 @@ public class DocumentServiceImpl implements DocumentService {
                         ? "REVIEW_REQUIRED"
                         : "COMPLETED";
 
+                double confidenceScore = reviewRequired
+                        ? calculateConfidence(validation)
+                        : 0.98;
+
+                List<String> reviewReasons = reviewRequired
+                        ? validation.errors()
+                        : List.of();
+
                 return new InvoiceExtractionResponse(
                         invoice,
                         validation,
                         status,
-                        reviewRequired
+                        reviewRequired,
+                        confidenceScore,
+                        reviewReasons
                 );
             }
 
         } catch (IOException e) {
-            throw new IllegalStateException(
-                    "Unable to process PDF",
-                    e
-            );
+            throw new IllegalStateException("Unable to process PDF", e);
         }
+    }
+
+    private double calculateConfidence(InvoiceValidationResult validation) {
+
+        int errorCount = validation.errors().size();
+        double confidence = 0.98 - (errorCount * 0.15);
+        return Math.max(confidence, 0.30);
     }
 }
