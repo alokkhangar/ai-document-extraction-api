@@ -110,8 +110,3 @@ class ConfidenceServiceTest {
         assertEquals(0.30, result, 0.0001);
     }
 }
-
-git status
-git add .
-git commit -m "Improve confidence scoring rules"
-git push
